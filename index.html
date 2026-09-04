@@ -217,6 +217,13 @@
         text-indent: 0.42em;
         color: rgba(255, 255, 255, 0.5);
       }
+      #julia .nick svg {
+        width: 34px;
+        height: 34px;
+        display: block;
+        margin: 12px auto 0;
+        filter: drop-shadow(0 0 12px rgba(255, 150, 180, 0.35));
+      }
       /* Touch-to-start overlay — the whole experience begins on the first touch */
       #start {
         position: fixed;
@@ -359,6 +366,24 @@
     </div>
     <div id="julia">
       <span class="name">Julia</span>
+      <span class="nick">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 14 C23 14 15 19 14 27 C13 36 17 45 25 49 C28 50.5 36 50.5 39 49 C47 45 51 36 50 27 C49 19 41 14 32 14 Z" fill="#eeb3c9"/>
+          <path d="M15 24 C11 18 9 12 12 10 C15 8 17 13 16 19 Z" fill="#d98aa8"/>
+          <path d="M49 24 C53 18 55 12 52 10 C49 8 47 13 48 19 Z" fill="#d98aa8"/>
+          <path d="M28 13 C27 9 26 6 27 4.5 C29 5 30 8 30 12 Z" fill="#d98aa8"/>
+          <path d="M36 13 C37 9 38 6 37 4.5 C35 5 34 8 34 12 Z" fill="#d98aa8"/>
+          <ellipse cx="24" cy="31" rx="4" ry="5.5" fill="#3c2030"/>
+          <ellipse cx="40" cy="31" rx="4" ry="5.5" fill="#3c2030"/>
+          <circle cx="22.5" cy="28.5" r="1.3" fill="#fff"/>
+          <circle cx="38.5" cy="28.5" r="1.3" fill="#fff"/>
+          <ellipse cx="32" cy="42" rx="2.2" ry="1.6" fill="#c26f8e"/>
+          <path d="M30 45 Q32 47 34 45" stroke="#c26f8e" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <circle cx="21" cy="22" r="1.8" fill="#d98aa8"/>
+          <circle cx="43" cy="22" r="1.8" fill="#d98aa8"/>
+          <circle cx="32" cy="17" r="1.4" fill="#d98aa8"/>
+        </svg>
+      </span>
     </div>
     <div id="hint"><span class="k">drag</span> to look &nbsp;·&nbsp; <span class="k">scroll</span> to zoom</div>
     <audio id="bgm" src="/heartbeat/assets/audio-BoHkmOEp.mp3" loop preload="auto"></audio>
