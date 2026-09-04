@@ -189,18 +189,8 @@
         color: #ff7aa8;
         font-size: 0.9em;
       }
-      #message .for {
-        margin: 12px 0 0;
-        font-family: inherit;
-        font-weight: 400;
-        text-transform: uppercase;
-        font-size: clamp(9px, 1.1vw, 12px);
-        letter-spacing: 0.34em;
-        text-indent: 0.34em;
-        color: rgba(255, 214, 226, 0.5);
-      }
-      /* Julia's name — same typographic voice as the message, white-transparent,
-      floating above the heart in the finale */
+      /* Julia's name — the theme's typographic voice, floating above the heart
+      in the finale. One name, nothing else. */
       #julia {
         position: fixed;
         left: 50%;
@@ -226,16 +216,6 @@
         letter-spacing: 0.42em;
         text-indent: 0.42em;
         color: rgba(255, 255, 255, 0.5);
-      }
-      #julia .nick {
-        display: flex;
-        justify-content: center;
-        margin-top: 14px;
-      }
-      #julia .nick svg {
-        width: 42px;
-        height: auto;
-        opacity: 0.6;
       }
       /* Touch-to-start overlay — the whole experience begins on the first touch */
       #start {
@@ -366,7 +346,7 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="/heartbeat/assets/index-C41K3nT-.js"></script>
+    <script type="module" crossorigin src="/heartbeat/assets/index-wCjoE-Vt.js"></script>
   </head>
   <body>
     <div id="app"></div>
@@ -376,25 +356,12 @@
     <div id="message">
       <i class="rule"></i>
       <h1>Happy Birthday <span class="heart">♥</span></h1>
-      <p class="for">mein Herz schlägt für dich</p>
     </div>
     <div id="julia">
       <span class="name">Julia</span>
-      <span class="nick">
-        <svg viewBox="0 0 48 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <g stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.85">
-            <path d="M20 30 C14.5 32.5 12.5 36.5 12.5 41 C12.5 47.5 16.5 52 20 52 C23.5 52 27.5 47.5 27.5 41 C27.5 36.5 25.5 32.5 20 30 Z" />
-            <path d="M18 23 L13.5 12 M18 23 L16.5 10.5 M18 23 L20 10 M18 23 L23.5 12" />
-            <path d="M16.5 25 L13.5 16.5 L19 22" />
-            <circle cx="16" cy="40" r="0.9" fill="#ffffff" stroke="none" />
-            <path d="M18 48 L22 48" />
-            <path d="M20 52 C20 55 20.5 56 21 58" />
-          </g>
-        </svg>
-      </span>
     </div>
     <div id="hint"><span class="k">drag</span> to look &nbsp;·&nbsp; <span class="k">scroll</span> to zoom</div>
-    <audio id="bgm" src="/heartbeat/assets/audio-DAeBQBJC.mp3" loop preload="auto"></audio>
+    <audio id="bgm" src="/heartbeat/assets/audio-BoHkmOEp.mp3" loop preload="auto"></audio>
     <div id="boot">
       <div class="mark"></div>
       <div class="label">Feliz Cumpleaños</div>
