@@ -4248,9 +4248,9 @@ if (ign < 0.001) discard;
         float period = 0.04 + aDrift * 0.16; // ~25s..50s per mote
         float cycleIdx = floor(uTime * period + aDrift * 53.0);
         float ph = fract(uTime * period + aDrift * 53.0);
-        float skip = step(hash13(vec3(cycleIdx, aDrift, 9.71)), 0.15); // only ~15% of cycles detach
-        float det = smoothstep(0.8, 1.0, ph) * skip * step(aDrift, 0.3);
-        p += (p + 0.4)*det*1.6;
+        float skip = step(hash13(vec3(cycleIdx, aDrift, 9.71)), 0.1); // only ~10% of cycles detach
+        float det = smoothstep(0.8, 1.0, ph) * skip * step(aDrift, 0.25);
+        p += (p + 0.4)*det*1.0;
         float detFade = 1.0 - det;
 
         float alpha = alphaB * appear * uOpacity * detFade * (0.85 + 0.25*(1.0-f));
