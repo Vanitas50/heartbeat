@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   root: ".",
+  base: "/heartbeat/",
   server: {
     host: "0.0.0.0",
     port: 5173,
