@@ -189,6 +189,45 @@
         color: #ff7aa8;
         font-size: 0.9em;
       }
+      /* Julia's name — same typographic voice as the message, white-transparent,
+      floating above the heart in the finale */
+      #julia {
+        position: fixed;
+        left: 50%;
+        top: 27%;
+        transform: translateX(-50%);
+        text-align: center;
+        opacity: 0;
+        pointer-events: none;
+        user-select: none;
+        z-index: 6;
+        width: min(90vw, 720px);
+        transition: opacity 3s cubic-bezier(0.19, 0.76, 0.28, 1);
+      }
+      #julia.visible {
+        opacity: 1;
+      }
+      #julia .name {
+        display: block;
+        font-family: inherit;
+        font-weight: 400;
+        text-transform: uppercase;
+        font-size: clamp(14px, 2.2vw, 22px);
+        letter-spacing: 0.42em;
+        text-indent: 0.42em;
+        color: rgba(255, 255, 255, 0.5);
+      }
+      #julia .nick {
+        display: block;
+        margin-top: 10px;
+        font-family: inherit;
+        font-weight: 400;
+        text-transform: uppercase;
+        font-size: clamp(9px, 1.1vw, 12px);
+        letter-spacing: 0.42em;
+        text-indent: 0.42em;
+        color: rgba(255, 255, 255, 0.32);
+      }
       /* Touch-to-start overlay — the whole experience begins on the first touch */
       #start {
         position: fixed;
@@ -318,7 +357,7 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="/heartbeat/assets/index-Bxca1Y8u.js"></script>
+    <script type="module" crossorigin src="/heartbeat/assets/index-d7QuZsuN.js"></script>
   </head>
   <body>
     <div id="app"></div>
@@ -328,6 +367,10 @@
     <div id="message">
       <i class="rule"></i>
       <h1>Happy Birthday <span class="heart">♥</span></h1>
+    </div>
+    <div id="julia">
+      <span class="name">Julia</span>
+      <span class="nick">Bambi</span>
     </div>
     <div id="hint"><span class="k">drag</span> to look &nbsp;·&nbsp; <span class="k">scroll</span> to zoom</div>
     <audio id="bgm" src="/heartbeat/assets/audio-DAeBQBJC.mp3" loop preload="auto"></audio>
