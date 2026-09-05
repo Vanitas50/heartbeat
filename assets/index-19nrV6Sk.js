@@ -4205,7 +4205,7 @@ if (ign < 0.001) discard;
   }
 `,ug=`
   float dotRadius(vec2 uv){ return 1.0 - smoothstep(0.0, 0.5, length(uv-0.5)); }
-`;function dg(e,t){let n=new Float32Array(e*3);for(let r=0;r<e;r++){let e=Math.random()**1.2*t,i=Math.random()*Math.PI*2,a=Math.acos(2*Math.random()-1);n[r*3+0]=e*Math.sin(a)*Math.cos(i),n[r*3+1]=e*Math.sin(a)*Math.sin(i)*.8,n[r*3+2]=e*Math.cos(a)}return n}function fg(e,t){let n=dg(e,9),r=new Float32Array(e*3),i=new Float32Array(e*4),a=new Float32Array(e*3),o=new Float32Array(e),s=t.length/3,c=new J;new W;for(let n=0;n<e;n++){let e=Math.random()*s|0;r[n*3+0]=t[e*3+0],r[n*3+1]=t[e*3+1],r[n*3+2]=t[e*3+2],i[n*4+0]=Math.random(),i[n*4+1]=.55+Math.random()*.45,i[n*4+2]=.35+Math.random()*.65,i[n*4+3]=Math.random();let l=i[n*4+3],u=l<.5?Jh.sparks:Jh.dust,d=u.length-1,f=Math.min(l,1)*d,p=Math.min(Math.floor(f),d-1);c.copy(new J(u[p]).lerp(new J(u[p+1]),f-p));let m=Math.random();c.multiplyScalar(.55+m*.75),a[n*3+0]=c.r,a[n*3+1]=c.g,a[n*3+2]=c.b,o[n]=Math.random()}let l=new Z;l.setAttribute(`position`,new Y(n,3)),l.setAttribute(`aTarget`,new Y(r,3)),l.setAttribute(`aData`,new Y(i,4)),l.setAttribute(`aColor`,new Y(a,3)),l.setAttribute(`aDrift`,new Y(o,1));let u=new Qc({transparent:!0,depthWrite:!1,blending:2,uniforms:{uTime:{value:0},uFormation:{value:0},uOpacity:{value:1},uHalo:{value:1.12},uSize:{value:1},uPixelRatio:{value:Math.min(window.devicePixelRatio||1,1.5)}},vertexShader:`
+`;function dg(e,t){let n=new Float32Array(e*3);for(let r=0;r<e;r++){let e=Math.random()**1.2*t,i=Math.random()*Math.PI*2;n[r*3+0]=e*Math.cos(i),n[r*3+1]=(Math.random()-.5)*6,n[r*3+2]=-(5+Math.random()*5)}return n}function fg(e,t){let n=dg(e,9),r=new Float32Array(e*3),i=new Float32Array(e*4),a=new Float32Array(e*3),o=new Float32Array(e),s=t.length/3,c=new J;new W;for(let n=0;n<e;n++){let e=Math.random()*s|0;r[n*3+0]=t[e*3+0],r[n*3+1]=t[e*3+1],r[n*3+2]=t[e*3+2],i[n*4+0]=Math.random(),i[n*4+1]=.55+Math.random()*.45,i[n*4+2]=.35+Math.random()*.65,i[n*4+3]=Math.random();let l=i[n*4+3],u=l<.5?Jh.sparks:Jh.dust,d=u.length-1,f=Math.min(l,1)*d,p=Math.min(Math.floor(f),d-1);c.copy(new J(u[p]).lerp(new J(u[p+1]),f-p));let m=Math.random();c.multiplyScalar(.55+m*.75),a[n*3+0]=c.r,a[n*3+1]=c.g,a[n*3+2]=c.b,o[n]=Math.random()}let l=new Z;l.setAttribute(`position`,new Y(n,3)),l.setAttribute(`aTarget`,new Y(r,3)),l.setAttribute(`aData`,new Y(i,4)),l.setAttribute(`aColor`,new Y(a,3)),l.setAttribute(`aDrift`,new Y(o,1));let u=new Qc({transparent:!0,depthWrite:!1,blending:2,uniforms:{uTime:{value:0},uFormation:{value:0},uOpacity:{value:1},uHalo:{value:1.12},uSize:{value:1},uPixelRatio:{value:Math.min(window.devicePixelRatio||1,1.5)}},vertexShader:`
       attribute vec3 aTarget;
       attribute vec4 aData;
       attribute vec3 aColor;
@@ -4231,6 +4231,11 @@ if (ign < 0.001) discard;
         // core drift target -> halo position
         vec3 p = mix(position, tgt, f);
 
+        // galaxy fly-through: strong forward push at the start (parallax-staggered
+        // per seed), decelerating to zero as the motes settle onto the heart
+        float fly = pow(1.0 - f, 2.0) * (0.35 + seed * 0.9);
+        p.z += fly * 5.0;
+
         // coherent turbulence -> subtle streams / filaments (strong enough to read
         // as a living universe even on small phone screens)
         vec3 q = p*1.6 + vec3(seed*9.0, -uTime*0.2, seed*7.0);
@@ -4245,11 +4250,6 @@ if (ign < 0.001) discard;
           cos(uTime * 0.12 + seed * 9.0) * 0.06,
           0.0
         );
-
-        // gentle orbit around the heart (tangential swirl)
-        float ang = uTime*(0.15 + seed*0.3) + seed*6.2831;
-        float orb = (0.07 + n*0.05) * f;
-        p += vec3(cos(ang)*orb, sin(ang*0.9)*orb*0.7, sin(ang)*orb*0.8);
 
         // occasional detach: a subset drifts away and fades. Each mote has its own
         // long, irregular cycle (per-particle period + random skips) so the
@@ -4267,7 +4267,7 @@ if (ign < 0.001) discard;
         vColor = aColor;
 
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        gl_PointSize = (sizeF * uSize * 52.0) * uPixelRatio / max(0.1, -mv.z) * (1.25 - 0.25*f) * 1.6;
+        gl_PointSize = min((sizeF * uSize * 52.0) * uPixelRatio / max(0.1, -mv.z) * (1.25 - 0.25*f) * 1.6, 90.0);
         gl_Position = projectionMatrix * mv;
       }
     `,fragmentShader:`
