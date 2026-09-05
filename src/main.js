@@ -315,7 +315,9 @@ function renderFrame(dt) {
 
 function tick() {
   rafId = requestAnimationFrame(tick);
-  const dt = Math.min(clock.getDelta(), 0.05);
+  // dt capped at 0.1 (not 0.05) so a phone running ~10fps still plays in
+  // real-time instead of the timeline crawling (time dilation).
+  const dt = Math.min(clock.getDelta(), 0.1);
   renderFrame(typeof window.__timeHint === "number" ? 0 : dt);
 }
 

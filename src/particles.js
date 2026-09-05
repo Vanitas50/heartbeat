@@ -129,11 +129,20 @@ export function createFormParticles(count, targetPoints) {
         // core drift target -> halo position
         vec3 p = mix(position, tgt, f);
 
-        // coherent turbulence -> subtle streams / filaments
+        // coherent turbulence -> subtle streams / filaments (strong enough to read
+        // as a living universe even on small phone screens)
         vec3 q = p*1.6 + vec3(seed*9.0, -uTime*0.2, seed*7.0);
         float n = fbm(q)*0.5 - 0.25;
-        p += normalize(tgt + 0.001) * n * 0.22;
-        p += vec3(n*0.5, n*0.35, n*0.8) * 0.12;
+        p += normalize(tgt + 0.001) * n * 0.32;
+        p += vec3(n*0.5, n*0.35, n*0.8) * 0.22;
+
+        // always-active gentle drift, independent of formation — the motes
+        // float visibly from second 0 on every screen
+        p += vec3(
+          sin(uTime * 0.15 + seed * 6.2831) * 0.06,
+          cos(uTime * 0.12 + seed * 9.0) * 0.06,
+          0.0
+        );
 
         // gentle orbit around the heart (tangential swirl)
         float ang = uTime*(0.15 + seed*0.3) + seed*6.2831;
