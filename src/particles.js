@@ -26,13 +26,14 @@ const SOFT_DOT = /* glsl */ `
 function buildStartField(count, spread) {
   const start = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
-    // a wide sheet deep behind the heart, so the galaxy fly-through streams
-    // toward the camera with parallax before the motes settle onto the heart
+    // biased shell so particles cluster loosely around the future heart; the
+    // gentler power keeps more motes out in the void for a full-screen gather
     const r = Math.pow(Math.random(), 1.2) * spread;
     const th = Math.random() * Math.PI * 2;
-    start[i * 3 + 0] = r * Math.cos(th);
-    start[i * 3 + 1] = (Math.random() - 0.5) * 6;
-    start[i * 3 + 2] = -(5 + Math.random() * 5);
+    const ph = Math.acos(2 * Math.random() - 1);
+    start[i * 3 + 0] = r * Math.sin(ph) * Math.cos(th);
+    start[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th) * 0.8;
+    start[i * 3 + 2] = r * Math.cos(ph);
   }
   return start;
 }
@@ -128,25 +129,16 @@ export function createFormParticles(count, targetPoints) {
         // core drift target -> halo position
         vec3 p = mix(position, tgt, f);
 
-        // galaxy fly-through: strong forward push at the start (parallax-staggered
-        // per seed), decelerating to zero as the motes settle onto the heart
-        float fly = pow(1.0 - f, 2.0) * (0.35 + seed * 0.9);
-        p.z += fly * 5.0;
-
-        // coherent turbulence -> subtle streams / filaments (strong enough to read
-        // as a living universe even on small phone screens)
+        // coherent turbulence -> subtle streams / filaments
         vec3 q = p*1.6 + vec3(seed*9.0, -uTime*0.2, seed*7.0);
         float n = fbm(q)*0.5 - 0.25;
-        p += normalize(tgt + 0.001) * n * 0.32;
-        p += vec3(n*0.5, n*0.35, n*0.8) * 0.22;
+        p += normalize(tgt + 0.001) * n * 0.22;
+        p += vec3(n*0.5, n*0.35, n*0.8) * 0.12;
 
-        // always-active gentle drift, independent of formation — the motes
-        // float visibly from second 0 on every screen
-        p += vec3(
-          sin(uTime * 0.15 + seed * 6.2831) * 0.06,
-          cos(uTime * 0.12 + seed * 9.0) * 0.06,
-          0.0
-        );
+        // gentle orbit around the heart (tangential swirl)
+        float ang = uTime*(0.15 + seed*0.3) + seed*6.2831;
+        float orb = (0.07 + n*0.05) * f;
+        p += vec3(cos(ang)*orb, sin(ang*0.9)*orb*0.7, sin(ang)*orb*0.8);
 
         // occasional detach: a subset drifts away and fades. Each mote has its own
         // long, irregular cycle (per-particle period + random skips) so the
@@ -164,7 +156,7 @@ export function createFormParticles(count, targetPoints) {
         vColor = aColor;
 
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        gl_PointSize = min((sizeF * uSize * 52.0) * uPixelRatio / max(0.1, -mv.z) * (1.25 - 0.25*f) * 1.6, 90.0);
+        gl_PointSize = (sizeF * uSize * 52.0) * uPixelRatio / max(0.1, -mv.z) * (1.25 - 0.25*f) * 1.6;
         gl_Position = projectionMatrix * mv;
       }
     `,
