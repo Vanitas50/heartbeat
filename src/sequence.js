@@ -30,7 +30,7 @@ export function createSequence() {
   // --- Particle / heart formation channels.
   // The particle heart outline is fully formed first (formation -> 1 by ~14s);
   // only then does the crystal slowly condense from it, so it never "pops".
-  const formOpacity = chan([[0, 0], [2, 0], [6, 1.06], [30, 0.8], [60, 0.8]]);
+  const formOpacity = chan([[0, 0], [0.3, 0], [1.5, 1.06], [26, 1.06], [32, 0.8], [60, 0.8]]);
   const dustOpacity = chan([[0, 0], [1.5, 0], [5.5, 0.6], [11, 0.85], [28, 0.6], [60, 0.5]]);
   const rayIntensity = chan([[0, 0], [3, 0], [12, 0.55], [28, 0.4], [60, 0.35]]);
   const formation = chan([[0, 0], [4, 0], [8, 0.25], [17, 1], [40, 1]]);
@@ -39,8 +39,8 @@ export function createSequence() {
   const heartScale = chan([[0, 1], [60, 1]]);
   const materialize = chan([[0, 0], [18, 0], [24, 1], [60, 1]]);
   const heartRotY = chan([[0, 0], [24, 0], [30, 0.5], [37, 0.7], [60, 0.7]]);
-  const auraIntensity = chan([[0, 0], [12, 0], [15, 0.22], [18, 0.72], [22, 0.85], [30, 0.72], [60, 0.66]]);
-  const coreIntensity = chan([[0, 0], [13, 0], [16, 0.12], [18, 0.75], [30, 0.5], [60, 0.45]]);
+  const auraIntensity = chan([[0, 0], [12, 0], [15, 0.35], [19, 0.8], [24, 0.7], [30, 0.58], [60, 0.52]]);
+  const coreIntensity = chan([[0, 0], [13, 0], [16, 0.2], [19, 0.8], [24, 0.5], [30, 0.36], [60, 0.3]]);
   const bloom = chan([[0, 0.16], [8, 0.28], [16, 0.4], [24, 0.5], [30, 0.42], [60, 0.38]]);
   const beatEnv = chan([[0, 0], [27, 0], [30, 1], [37, 1], [60, 1]]);
 
@@ -51,10 +51,10 @@ export function createSequence() {
     new THREE.Vector3(7.4, 5.6, 17.5), // 0  — far, dark
     new THREE.Vector3(5.6, 4.4, 13.4), // 5  — particles emerge
     new THREE.Vector3(3.6, 3.0, 9.8), // 10 — gathering
-    new THREE.Vector3(2.85, 2.15, 7.4), // 19 — arrive, camera frozen during build
-    new THREE.Vector3(2.85, 2.15, 7.4), // 25 — (duplicate -> hold)
-    new THREE.Vector3(2.75, 1.7, 6.4), // 31 — settle into hero
-    new THREE.Vector3(2.75, 1.7, 6.4), // INTRO+3 — hold hero until pull-back
+    new THREE.Vector3(2.8, 2.0, 6.0), // 19 — arrive, camera frozen during build
+    new THREE.Vector3(2.8, 2.0, 6.0), // 25 — (duplicate -> hold)
+    new THREE.Vector3(2.6, 1.7, 4.8), // 31 — settle into hero
+    new THREE.Vector3(2.6, 1.7, 4.8), // INTRO+3 — hold hero until pull-back
   ];
   const camTimes = [0, 5, 10, 19, 25, 31, INTRO + 3];
   const camCurve = new THREE.CatmullRomCurve3(camPoints, false, "centripetal");
@@ -86,16 +86,16 @@ export function createSequence() {
     const introPos = camCurve.getPoint(introU);
     const introLook = lookCurve.getPoint(introU);
 
-    // Post-intro: an extremely gentle, slow orbit (at the approved hero distance)
+    // Post-intro: an extremely gentle, slow orbit (a touch closer so the gift reads big)
     const orbitT = Math.max(0, t - INTRO);
     const ang = orbitT * 0.045;
-    const radius = 5.2;
+    const radius = 4.7;
     const ambientPos = new THREE.Vector3(
       Math.cos(ang) * radius,
-      1.65 + Math.sin(orbitT * 0.12) * 0.22,
+      1.55 + Math.sin(orbitT * 0.12) * 0.22,
       Math.sin(ang) * radius
     );
-    const ambientLook = new THREE.Vector3(0, 0.2, 0);
+    const ambientLook = new THREE.Vector3(0, 0.28, 0);
 
     const w = smoothRange(t, INTRO - 1.5, INTRO + 1.0);
     const pos = introPos.clone().lerp(ambientPos, w);

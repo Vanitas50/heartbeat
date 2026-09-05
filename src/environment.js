@@ -38,15 +38,16 @@ export function createEnvironment(scene, renderer) {
     envScene.add(m);
     return m;
   };
-  const origin = new THREE.Vector3(0, 0, 0);
-  mkGlow(0xe9a8c0, 0.7, 4, 3, 2); // soft pink key
+const origin = new THREE.Vector3(0, 0, 0);
+  mkGlow(0xe9a8c0, 0.55, 4, 3, 2); // soft pink key
   mkGlow(0xffcd9e, 0.5, -5, 1.5, -3); // warm rose-gold rim
   mkGlow(0xb44fc0, 0.35, 0, -4, 3); // magenta floor bounce
-  mkGlow(0xe08aa8, 0.6, -2, 2.5, 2.5); // rose side fill
+  mkGlow(0xe08aa8, 0.65, -2, 2.5, 2.5); // rose side fill (balanced)
   mkGlow(0xffffff, 0.3, 0.3, 1.2, 0.3, 1.2); // hot point highlight
-  // Structured studio lights for the facets (kept quiet so the orbit stays calm)
-  mkSoftbox(0xffe0ec, 0.6, 6, 4.5, 4, 7, 5, origin); // warm key softbox (top-right)
-  mkSoftbox(0xe79ab8, 0.5, -6, 2, 3.5, 5, 6, origin); // rose side softbox
+  // Structured studio lights for the facets (balanced left/right so the
+  // crystal's reflections stay symmetric and the reveal reads centered)
+  mkSoftbox(0xffe0ec, 0.45, 6, 4.5, 4, 7, 5, origin); // warm key softbox (top-right)
+  mkSoftbox(0xff9dbb, 0.6, -6, 2, 3.5, 5, 6, origin); // rose side softbox (left)
   mkSoftbox(0x8a5bd0, 0.35, 2, -3.5, -5, 5, 3.5, origin); // cool magenta low softbox
 
   const envRT = pmrem.fromScene(envScene, 0.04);
@@ -64,6 +65,7 @@ export function createEnvironment(scene, renderer) {
       uBottom: { value: new THREE.Color(0x010103) }, // near-black
       uGlow: { value: new THREE.Color(0x230820) }, // faint heart-infused center
       uTime: { value: 0 },
+      uGlowScale: { value: 0 }, // 0 during the reveal so it never steals focus
     },
     vertexShader: /* glsl */ `
       varying vec3 vPos;
@@ -74,7 +76,7 @@ export function createEnvironment(scene, renderer) {
     `,
     fragmentShader: /* glsl */ `
       uniform vec3 uTop, uBottom, uGlow;
-      uniform float uTime;
+      uniform float uTime, uGlowScale;
       varying vec3 vPos;
 
       float hash12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
@@ -85,7 +87,8 @@ export function createEnvironment(scene, renderer) {
         vec3 c = mix(uBottom, uTop, h);
 
         // Several faint glow spots: each dims out, then reappears at a new
-        // random position (staggered so it never feels busy).
+        // random position (staggered so it never feels busy). Gated by
+        // uGlowScale so the drifting light never competes with the reveal.
         float total = 0.0;
         for (int i = 0; i < 3; i++) {
           float fi = float(i);
@@ -97,7 +100,7 @@ export function createEnvironment(scene, renderer) {
           float spot = exp(-pow(length(dir.xy - p), 2.0) * 2.6) * (1.0 - abs(dir.y) * 0.8);
           total += spot * env;
         }
-        c += uGlow * total * 0.05;
+        c += uGlow * total * 0.05 * uGlowScale;
         gl_FragColor = vec4(c, 1.0);
       }
     `,
@@ -164,6 +167,9 @@ export function createEnvironment(scene, renderer) {
     setTime(t) {
       rayMat.uniforms.uTime.value = t;
       bgMat.uniforms.uTime.value = t;
+    },
+    setGlowScale(v) {
+      bgMat.uniforms.uGlowScale.value = v;
     },
     setRayIntensity(v) {
       rayMat.uniforms.uIntensity.value = v;

@@ -41,7 +41,7 @@
       #caption {
         position: fixed;
         left: 50%;
-        bottom: 6.5vh;
+        bottom: calc(6.5vh + env(safe-area-inset-bottom));
         transform: translateX(-50%);
         color: rgba(255, 214, 226, 0.0);
         letter-spacing: 0.42em;
@@ -72,13 +72,15 @@
       #hint {
         position: fixed;
         left: 50%;
-        bottom: 14.5vh;
+        bottom: calc(20vh + env(safe-area-inset-bottom));
         transform: translateX(-50%) translateY(6px);
         color: rgba(255, 214, 226, 0.55);
         letter-spacing: 0.3em;
         font-size: clamp(9px, 1.1vw, 12px);
         text-transform: uppercase;
         text-align: center;
+        white-space: nowrap;
+        line-height: 2;
         user-select: none;
         pointer-events: none;
         z-index: 6;
@@ -153,7 +155,7 @@
       #message {
         position: fixed;
         left: 50%;
-        bottom: 8vh;
+        bottom: calc(8vh + env(safe-area-inset-bottom));
         transform: translateX(-50%);
         text-align: center;
         opacity: 0;
@@ -186,6 +188,34 @@
       #message h1 .heart {
         color: #ff7aa8;
         font-size: 0.9em;
+      }
+      /* Julia's name — the theme's typographic voice, floating above the heart
+      in the finale. One name, nothing else. */
+      #julia {
+        position: fixed;
+        left: 50%;
+        top: 13%;
+        transform: translateX(-50%);
+        text-align: center;
+        opacity: 0;
+        pointer-events: none;
+        user-select: none;
+        z-index: 6;
+        width: min(90vw, 720px);
+        transition: opacity 3s cubic-bezier(0.19, 0.76, 0.28, 1);
+      }
+      #julia.visible {
+        opacity: 1;
+      }
+      #julia .name {
+        display: block;
+        font-family: inherit;
+        font-weight: 400;
+        text-transform: uppercase;
+        font-size: clamp(14px, 2.2vw, 22px);
+        letter-spacing: 0.42em;
+        text-indent: 0.42em;
+        color: rgba(255, 255, 255, 0.5);
       }
       /* Touch-to-start overlay — the whole experience begins on the first touch */
       #start {
@@ -326,8 +356,11 @@
       <i class="rule"></i>
       <h1>Happy Birthday <span class="heart">♥</span></h1>
     </div>
+    <div id="julia">
+      <span class="name">Julia</span>
+    </div>
     <div id="hint"><span class="k">drag</span> to look &nbsp;·&nbsp; <span class="k">scroll</span> to zoom</div>
-    <audio id="bgm" src="audio.mp3" loop preload="auto"></audio>
+    <audio id="bgm" src="/heartbeat/audio.mp3" loop preload="auto"></audio>
     <div id="boot">
       <div class="mark"></div>
       <div class="label">Feliz Cumpleaños</div>

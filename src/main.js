@@ -15,56 +15,69 @@ const bootEl = document.getElementById("boot");
 const hintEl = document.getElementById("hint");
 const messageEl = document.getElementById("message");
 const startEl = document.getElementById("start");
+const juliaEl = document.getElementById("julia");
+const captionTextEl = document.getElementById("captionText");
 
 // --- Adaptive quality: on phones we cut pixel count, bloom, particles and
 // post overlays so the tab stays cool (fewer GPU stalls/crashes, less lag).
 const isMobile =
   /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ||
-  (navigator.maxTouchPoints > 0 && window.innerWidth < 900);
+  (navigator.maxTouchPoints > 0 && window.innerWidth < 900) ||
+  window.matchMedia("(pointer: coarse)").matches;
 const QUALITY = {
   isMobile,
-  pixelRatio: isMobile ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.5),
+  // NOTE: pixel ratio stays at 1.5 on mobile — 1.0 read as "blurry" to the user
+  // (explicit feedback). Sharpness wins here; load is cut elsewhere (grain,
+  // particles, bloom mips, safe-areas).
+  pixelRatio: isMobile ? Math.min(window.devicePixelRatio || 1, 1.5) : Math.min(window.devicePixelRatio || 1, 1.5),
   particles: isMobile ? 1800 : 3400,
   dust: isMobile ? 120 : 300,
+  twinkles: isMobile ? 14 : 18,
   nMips: isMobile ? 3 : 5,
 };
+
+// The interaction hint must match the input the device actually has
+hintEl.innerHTML = isMobile
+  ? '<span class="k">drag</span> to look &nbsp;·&nbsp; <span class="k">pinch</span> to zoom'
+  : '<span class="k">drag</span> to look &nbsp;·&nbsp; <span class="k">scroll</span> to zoom';
 
 // --- Background music. Browsers block AUDIBLE autoplay until a user gesture —
 // that's a hard platform rule, no site can bypass it. We try to start the
 // moment the audio is loadable (works where the browser allows it, e.g. after
 // a previous visit), and otherwise start on the very first interaction.
 const bgm = document.getElementById("bgm");
+// The song starts ONLY on the "touch" tap — no autoplay, not even muted,
+// before the experience begins.
 bgm.volume = 0.8;
 let musicStarted = false;
 function startMusic() {
   if (musicStarted) return;
   bgm.play().then(() => { musicStarted = true; }).catch(() => {});
 }
-bgm.addEventListener("canplay", startMusic);
-bgm.addEventListener("loadeddata", startMusic);
-startMusic();
-const MUSIC_GESTURES = ["pointerdown", "mousedown", "touchstart", "keydown", "wheel", "click"];
-function firstGesture() {
-  startMusic();
-  for (const ev of MUSIC_GESTURES) window.removeEventListener(ev, firstGesture);
-}
-for (const ev of MUSIC_GESTURES) window.addEventListener(ev, firstGesture);
-
-// --- Touch-to-start: the whole experience (timeline + music) begins together
-// on the first touch of the start screen.
+// NOTE: no autoplay, no load-time start, no window-wide gesture listeners.
+// The song starts ONLY when "touch" is tapped.
 let started = false;
+let languageSwapped = false;
 function begin(e) {
-  if (started) return;
-  e.preventDefault(); // stop any default tap/pull-to-refresh behavior
-  started = true;
-  startEl.classList.add("hidden");
-  startMusic();
+  // NOTE: no preventDefault here — on iOS Safari it can break the audio
+  // activation. Pull-to-refresh is already blocked by touch-action:none on #start.
+  if (!musicStarted) startMusic(); // the tap is the user gesture → plays audible
+  if (!started) {
+    started = true;
+    startEl.classList.add("hidden");
+    tick(); // start the render loop now — no GPU drain behind the start screen
+  }
 }
 startEl.addEventListener("pointerdown", begin);
+startEl.addEventListener("touchstart", begin);
+startEl.addEventListener("touchend", begin);
+startEl.addEventListener("click", begin);
 
 // --- Renderer
+// NOTE: antialias stays on everywhere — turning it off on mobile made edges
+// read as "unsauber" to the user (explicit feedback).
 const renderer = new THREE.WebGLRenderer({
-  antialias: !isMobile, // bloom hides edges on phones; AA is expensive there
+  antialias: true,
   alpha: false,
   powerPreference: "high-performance",
   stencil: false,
@@ -72,7 +85,8 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(QUALITY.pixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.9;
+// Phones read darker in daylight — lift the exposure a touch there
+renderer.toneMappingExposure = isMobile ? 1.05 : 0.9;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 app.appendChild(renderer.domElement);
 
@@ -149,7 +163,7 @@ const BAUBLES = {
   petals: true, // #4 rose petals (tamed: few, finale only)
   hexagon: false, // #8 Wanda hexagon — OFF (noise)
 };
-const twinkles = BAUBLES.twinkles ? createSugarTwinkles(heartGroup, heartInfo.points) : null;
+const twinkles = BAUBLES.twinkles ? createSugarTwinkles(heartGroup, heartInfo.points, QUALITY.twinkles) : null;
 const sparks = BAUBLES.sparks ? createSparks(heartGroup) : null;
 const star = BAUBLES.star ? createStar(heartGroup) : null;
 const flame = BAUBLES.flame ? createFlame(heartGroup) : null;
@@ -168,6 +182,11 @@ let booted = false;
 
 function applyFrame(t) {
   const s = seq.sample(t);
+
+  // Brighten the early void through the whole opening (gather + materialize),
+  // then settle — so the crystal never forms in the darkest moment.
+  const exposureBase = isMobile ? 1.05 : 0.9;
+  renderer.toneMappingExposure = exposureBase + 0.3 * (1 - smoothRange(s.time, 0, 30));
 
   // Heart rhythm — a gentle pulse, not a strobe
   const beatScale = 1 + 0.02 * s.beat;
@@ -215,11 +234,14 @@ function applyFrame(t) {
   dust.setOpacity(s.dustOpacity);
   env.setTime(t);
   env.setRayIntensity(s.rayIntensity);
-  env.setBackgroundGlow(0.1 * s.coreIntensity + 0.12 * s.auraIntensity);
+  // The pink glow stays present during the reveal (dimmed to 30%), then comes
+  // up to full at the hero — beautiful but never stealing the focus.
+  env.setGlowScale(0.3 + 0.7 * smoothRange(s.time, 24, 30));
+  env.setBackgroundGlow(0.07 + 0.1 * s.coreIntensity + 0.12 * s.auraIntensity);
 
-  // Baubles — sugar twinkles once the crystal is whole; rose petals drift
-// through the very end of the finale.
-  const whole = smoothRange(s.time, 24, 27);
+  // Baubles — sugar twinkles once the crystal reads as done (~19s), rose petals
+// drift through the very end of the finale.
+  const whole = smoothRange(s.time, 19, 21);
   if (twinkles) {
     twinkles.setTime(t);
     twinkles.setShow(whole);
@@ -249,20 +271,36 @@ function applyFrame(t) {
   if (view.enabled) {
     applyView();
   }
-  // Hint surfaces once the heart has fully formed, regardless of interaction
-  if (s.time > 24 && !hintEl.classList.contains("show")) {
+  // Hint surfaces once the heart reads as formed (~19s), regardless of interaction
+  if (s.time > 19 && !hintEl.classList.contains("show")) {
     hintEl.classList.add("show");
   }
 
   // Bloom
   post.setBloomStrength(s.bloom);
 
-  // The personal message replaces the caption once the hero has settled
+  // The personal message replaces the caption once the hero has settled; the
+  // interaction hint has served its purpose and fades with it. The caption is
+  // hidden instantly (no 3s cross-fade overlap with the message).
   if (s.time > 40 && !messageEl.classList.contains("visible")) {
     messageEl.classList.add("visible");
+    juliaEl.classList.add("visible");
+    captionEl.style.transition = "none";
     captionEl.classList.remove("visible");
+    hintEl.classList.remove("show");
   } else if (s.caption > 0.4 && !captionEl.classList.contains("visible") && !messageEl.classList.contains("visible")) {
     captionEl.classList.add("visible");
+  }
+  // One language at a time over the arc: her Peru roots, then Korea, then the
+  // finale — the swap cross-fades so it never snaps.
+  if (!messageEl.classList.contains("visible") && s.time > 37 && !languageSwapped) {
+    languageSwapped = true;
+    captionTextEl.style.transition = "opacity 0.6s";
+    captionTextEl.style.opacity = "0";
+    setTimeout(() => {
+      captionTextEl.textContent = "생일 축하해";
+      captionTextEl.style.opacity = "1";
+    }, 600);
   }
   return s;
 }
@@ -279,14 +317,18 @@ function tick() {
   rafId = requestAnimationFrame(tick);
   const dt = Math.min(clock.getDelta(), 0.05);
   renderFrame(typeof window.__timeHint === "number" ? 0 : dt);
-  if (!booted) {
-    booted = true;
-    window.__ready = true;
-    setTimeout(() => bootEl.classList.add("hidden"), 900);
-  }
 }
 
 let rafId = 0;
+
+// The start screen shows a static t=0 frame; the RAF loop stays idle (no GPU
+// drain) until begin() starts the experience.
+function markBooted() {
+  if (booted) return;
+  booted = true;
+  window.__ready = true;
+  setTimeout(() => bootEl.classList.add("hidden"), 900);
+}
 
 // --- Interactive view (drag to look, scroll to zoom).
 // The cinematic sequence keeps the camera until the viewer intervenes; from then
@@ -320,27 +362,47 @@ renderer.domElement.addEventListener(
   (e) => {
     e.preventDefault();
     if (!view.enabled) synchronizeViewFromCamera();
-    view.radius = clamp(view.radius * Math.exp(e.deltaY * 0.0013), 2.0, 14.0);
+    view.radius = clamp(view.radius * Math.exp(e.deltaY * 0.0013), 1.5, 20.0);
     hintEl.classList.remove("show");
   },
   { passive: false }
 );
 
+// Two-finger pinch to zoom on touch screens (wheel does the same on desktop)
+const touchPoints = new Map();
+let pinchDist = 0;
+
 renderer.domElement.addEventListener("pointerdown", (e) => {
-  dragging = true;
-  lastX = e.clientX;
-  lastY = e.clientY;
+  touchPoints.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (touchPoints.size === 1) {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  }
   if (!view.enabled) synchronizeViewFromCamera();
   hintEl.classList.remove("show");
 });
 window.addEventListener("pointermove", (e) => {
+  if (touchPoints.has(e.pointerId)) touchPoints.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  // pinch: two pointers change the zoom radius
+  if (touchPoints.size === 2) {
+    const pts = [...touchPoints.values()];
+    const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    if (pinchDist) view.radius = clamp(view.radius * (pinchDist / dist), 1.5, 20.0);
+    pinchDist = dist;
+    return;
+  }
   if (!dragging) return;
   view.theta -= (e.clientX - lastX) * 0.005;
   view.phi = clamp(view.phi - (e.clientY - lastY) * 0.005, 0.32, 1.5);
   lastX = e.clientX;
   lastY = e.clientY;
 });
-window.addEventListener("pointerup", () => (dragging = false));
+window.addEventListener("pointerup", (e) => {
+  touchPoints.delete(e.pointerId);
+  pinchDist = 0;
+  if (touchPoints.size === 0) dragging = false;
+});
 renderer.domElement.style.cursor = "grab";
 
 // --- Resize
@@ -389,8 +451,10 @@ window.__heartbeat = {
   },
 };
 
-// Initially render the very dark start state immediately.
+// Initially render the very dark start state immediately (shown behind the
+// start screen). The RAF loop is NOT started here — begin() starts it, so the
+// page is idle (no GPU drain) until the user taps "touch".
 applyFrame(0);
 post.render();
 
-tick();
+markBooted();

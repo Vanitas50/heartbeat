@@ -9,13 +9,21 @@ const PR = Math.min(window.devicePixelRatio || 1, 1.5);
 // ---------------------------------------------------------------------------
 // #3 Rock-candy sugar twinkles: tiny glitter that flickers on the facets.
 // Tamed: few, small, quiet — decoration must whisper.
-export function createSugarTwinkles(parent, points) {
-  const count = 36;
+export function createSugarTwinkles(parent, points, count = 18) {
   const pos = new Float32Array(count * 3);
   const data = new Float32Array(count * 2);
   const tN = points.length / 3;
+  // Balanced placement: half the twinkles on the right half of the heart,
+  // half on the left — so the glitter never clusters to one side.
+  const right = [];
+  const left = [];
+  for (let i = 0; i < tN; i++) {
+    if (points[i * 3] >= 0) right.push(i);
+    else left.push(i);
+  }
   for (let i = 0; i < count; i++) {
-    const si = (Math.random() * tN) | 0;
+    const pool = i < count / 2 ? right : left;
+    const si = pool[(Math.random() * pool.length) | 0];
     pos[i * 3 + 0] = points[si * 3 + 0];
     pos[i * 3 + 1] = points[si * 3 + 1];
     pos[i * 3 + 2] = points[si * 3 + 2];

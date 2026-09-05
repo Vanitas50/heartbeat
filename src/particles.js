@@ -121,7 +121,7 @@ export function createFormParticles(count, targetPoints) {
         float f = uFormation*uFormation*(3.0-2.0*uFormation);
         // Motes appear (scattered) at staggered times, drift in, gather.
         // Visibility is decoupled from formation so the void fills first.
-        float appear = smoothstep(0.6 + seed*1.8, 2.4 + seed*1.8, uTime);
+        float appear = smoothstep(0.02 + seed*0.5, 0.4 + seed*0.5, uTime);
 
         // grow into a soft halo around the crystal (not a coating on its surface)
         vec3 tgt = aTarget * uHalo;
@@ -146,12 +146,12 @@ export function createFormParticles(count, targetPoints) {
         float period = 0.04 + aDrift * 0.16; // ~25s..50s per mote
         float cycleIdx = floor(uTime * period + aDrift * 53.0);
         float ph = fract(uTime * period + aDrift * 53.0);
-        float skip = step(hash13(vec3(cycleIdx, aDrift, 9.71)), 0.4); // only ~40% of cycles detach
-        float det = smoothstep(0.8, 1.0, ph) * skip * step(aDrift, 0.3);
-        p += (p + 0.4)*det*1.6;
-        float detFade = 1.0 - det;
+        float skip = step(hash13(vec3(cycleIdx, aDrift, 9.71)), 0.1); // only ~10% of cycles detach
+        float det = smoothstep(0.8, 1.0, ph) * skip * step(aDrift, 0.25);
+        p += (p + 0.4)*det*1.0;
+        float detFade = 1.0 - det * 0.4;
 
-        float alpha = alphaB * appear * uOpacity * detFade * 1.15 * (0.75 + 0.55*(1.0-f));
+        float alpha = alphaB * appear * uOpacity * detFade * (0.85 + 0.25*(1.0-f));
         vAlpha = alpha;
         vColor = aColor;
 
